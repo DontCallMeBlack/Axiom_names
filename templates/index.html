@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axiom Names</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .upload-container {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .upload-container:hover {
+            transform: translateY(-2px);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--primary);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-dark);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area.dragover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary-dark);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .upload-btn i {
+            font-size: 1.2rem;
+        }
+
+        .results {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .results h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .matches {
+            background: var(--surface);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .match-item {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .match-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .match-icon {
+            color: var(--primary);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .error {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        .visualization {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .visualization img {
+            max-width: 100%;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .menu-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .menu-group {
+            flex: 1;
+        }
+
+        .menu-label {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .menu-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-select:hover {
+            border-color: var(--primary-dark);
+        }
+
+        .menu-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn i {
+            font-size: 1.2rem;
+        }
+
+        .copy-success {
+            color: var(--success);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .copy-success.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-container {
+                padding: 1.5rem;
+            }
+
+            .upload-area {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Axiom Names</h1>
+            <p>Upload an image or video to scan for names</p>
+        </div>
+
+        <div class="upload-container">
+            <div class="menu-container">
+                <div class="menu-group">
+                    <div class="menu-label">Boss Name</div>
+                    <select class="menu-select" id="bossSelect">
+                        <option value="">Select Boss</option>
+                        <option value="bt">BT</option>
+                        <option value="dino">Dino</option>
+                        <option value="crom">Crom</option>
+                        <option value="gele">Gele</option>
+                        <option value="base">Base</option>
+                        <option value="prime">Prime</option>
+                        <option value="rings4x5">Rings4x5</option>
+                    </select>
+                </div>
+                <div class="menu-group">
+                    <div class="menu-label">Multiplier</div>
+                    <select class="menu-select" id="multiplierSelect">
+                        <option value="normal">Normal</option>
+                        <option value="doublepoints">Double Points</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <p class="upload-text">Drag and drop your file here</p>
+                <p class="upload-text" style="font-size: 0.9rem;">or</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-upload"></i>
+                    Choose File
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your file...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="results" id="results">
+                <h2>Results</h2>
+                <div class="matches" id="matches"></div>
+                <button class="copy-btn" id="copyBtn" style="display: none;">
+                    <i class="fas fa-copy"></i>
+                    Copy to Clipboard
+                </button>
+                <div class="copy-success" id="copySuccess">
+                    <i class="fas fa-check-circle"></i> Copied to clipboard!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const matches = document.getElementById('matches');
+        const bossSelect = document.getElementById('bossSelect');
+        const multiplierSelect = document.getElementById('multiplierSelect');
+        const copyBtn = document.getElementById('copyBtn');
+        const copySuccess = document.getElementById('copySuccess');
+
+        let currentMatches = [];
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop zone when dragging over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } });
+        }
+
+        function handleFiles(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/avi', 'video/quicktime'];
+            if (!allowedTypes.includes(file.type)) {
+                showError('Invalid file type. Please upload an image (PNG, JPG) or video (MP4, AVI, MOV)');
+                return;
+            }
+
+            // Validate file size (16MB max)
+            if (file.size > 16 * 1024 * 1024) {
+                showError('File size too large. Maximum size is 16MB');
+                return;
+            }
+
+            uploadFile(file);
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show loading state
+            loading.classList.add('active');
+            error.classList.remove('active');
+            results.classList.remove('active');
+            matches.innerHTML = '';
+            copyBtn.style.display = 'none';
+            copySuccess.classList.remove('active');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.remove('active');
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Show results
+                results.classList.add('active');
+                
+                if (data.matches) {
+                    currentMatches = data.matches.split(' ').filter(match => match.trim());
+                    matches.innerHTML = currentMatches.map(match => `
+                        <div class="match-item">
+                            <i class="fas fa-check-circle match-icon"></i>
+                            <span>${match}</span>
+                        </div>
+                    `).join('');
+                    copyBtn.style.display = 'inline-flex';
+                } else {
+                    matches.innerHTML = '<p>No matches found</p>';
+                    currentMatches = [];
+                }
+            })
+            .catch(err => {
+                loading.classList.remove('active');
+                showError('An error occurred while processing your file');
+                console.error('Error:', err);
+            });
+        }
+
+        copyBtn.addEventListener('click', () => {
+            const bossName = bossSelect.value;
+            const multiplier = multiplierSelect.value;
+            let text = '';
+
+            if (bossName) {
+                text = `/${bossName}${multiplier === 'doublepoints' ? '(doublepoints)' : ''} ${currentMatches.join(' ')}`;
+            } else {
+                text = currentMatches.join(' ');
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                copySuccess.classList.add('active');
+                setTimeout(() => {
+                    copySuccess.classList.remove('active');
+                }, 2000);
+            }).catch(err => {
+                showError('Failed to copy to clipboard');
+                console.error('Error:', err);
+            });
+        });
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('active');
+            setTimeout(() => {
+                error.classList.remove('active');
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 
