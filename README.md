@@ -94,6 +94,9 @@ The application will be available at `http://localhost:5000`
 - scikit-learn
 - Other dependencies listed in requirements.txt
 
+## Cleanup
+Unnecessary files have been removed to reduce project size.
+
 ## License
 
-MIT License 
+MIT License

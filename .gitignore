@@ -19,13 +19,3 @@ env/
 # OS
 .DS_Store
 Thumbs.db
-
-# Project specific
-*.log
-temp_*
-*.mp4
-*.avi
-*.mov
-*.jpg
-*.jpeg
-*.png

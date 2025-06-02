@@ -153,18 +153,22 @@
         .matches {
             background: var(--surface);
             border-radius: 0.75rem;
-            padding: 1.5rem;
+            padding: 1rem;
             margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .match-item {
-            background: rgba(99, 102, 241, 0.1);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
+            background: rgba(99, 102, 241, 0.08);
+            border-radius: 0.4rem;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.95rem;
+            margin: 0;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.3rem;
             animation: slideIn 0.3s ease;
         }
 
@@ -338,6 +342,35 @@
                 padding: 1.5rem;
             }
         }
+
+        .add-names-container {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .add-names-input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 0.4rem;
+            border: 1px solid var(--primary);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .add-names-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.4rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .add-names-btn:hover {
+            background: var(--primary-dark);
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -393,6 +426,10 @@
             <div class="results" id="results">
                 <h2>Results</h2>
                 <div class="matches" id="matches"></div>
+                <div class="add-names-container">
+                    <input type="text" id="addNamesInput" class="add-names-input" placeholder="Add more names (space separated)">
+                    <button class="add-names-btn" id="addNamesBtn">Add</button>
+                </div>
                 <button class="copy-btn" id="copyBtn" style="display: none;">
                     <i class="fas fa-copy"></i>
                     Copy to Clipboard
@@ -417,6 +454,7 @@
         const copySuccess = document.getElementById('copySuccess');
 
         let currentMatches = [];
+        let extraNames = [];
 
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -529,13 +567,12 @@
             const bossName = bossSelect.value;
             const multiplier = multiplierSelect.value;
             let text = '';
-
+            const allNames = currentMatches.concat(extraNames).filter((v, i, a) => a.indexOf(v) === i);
             if (bossName) {
-                text = `/${bossName}${multiplier === 'doublepoints' ? '(doublepoints)' : ''} ${currentMatches.join(' ')}`;
+                text = `/${bossName}${multiplier === 'doublepoints' ? '(doublepoints)' : ''} ${allNames.join(' ')}`;
             } else {
-                text = currentMatches.join(' ');
+                text = allNames.join(' ');
             }
-
             navigator.clipboard.writeText(text).then(() => {
                 copySuccess.classList.add('active');
                 setTimeout(() => {
@@ -547,6 +584,38 @@
             });
         });
 
+        // Add names functionality
+        const addNamesInput = document.getElementById('addNamesInput');
+        const addNamesBtn = document.getElementById('addNamesBtn');
+        addNamesBtn.addEventListener('click', () => {
+            const namesToAdd = addNamesInput.value.trim().split(/\s+/).filter(Boolean);
+            if (namesToAdd.length > 0) {
+                extraNames = extraNames.concat(namesToAdd).filter((v, i, a) => a.indexOf(v) === i);
+                renderMatches();
+                addNamesInput.value = '';
+            }
+        });
+        function renderMatches() {
+            const allNames = currentMatches.concat(extraNames).filter((v, i, a) => a.indexOf(v) === i);
+            matches.innerHTML = allNames.map(match => `
+                <div class="match-item">
+                    <i class="fas fa-check-circle match-icon"></i>
+                    <span>${match}</span>
+                </div>
+            `).join('');
+            copyBtn.style.display = allNames.length ? 'inline-flex' : 'none';
+        }
+        // Update renderMatches after upload
+        function updateAfterUpload() {
+            extraNames = [];
+            renderMatches();
+        }
+        // Patch uploadFile to use updateAfterUpload
+        const origUploadFile = uploadFile;
+        uploadFile = function(file) {
+            origUploadFile.call(this, file);
+            setTimeout(updateAfterUpload, 500); // Wait for results to render
+        };
         function showError(message) {
             error.textContent = message;
             error.classList.add('active');
@@ -556,4 +625,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

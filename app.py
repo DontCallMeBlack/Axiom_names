@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 from PIL import Image
 import pytesseract
+pytesseract.pytesseract.tesseract_cmd = r'Tesseract-OCR/tesseract.exe'
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import io
@@ -11,6 +12,7 @@ import re
 from functools import lru_cache
 import cv2
 import tempfile
+from rapidfuzz import fuzz, process
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -66,7 +68,7 @@ def extract_text_from_image(image):
         # Define scanning parameters
         window_width = width // 4  # First quarter of the image
         window_height = 200
-        stride = 90  # Changed stride to 90 pixels
+        stride = 25  # Set stride to 100 pixels
         x_offset = 150  # Shift right by 150 pixels
         
         # Calculate smaller window dimensions
@@ -121,7 +123,7 @@ def extract_text_from_image(image):
                         potential_name = re.sub(r'[^a-zA-Z0-9]', '', potential_name)
                         
                         # Try to match the name
-                        matches = find_matching_names(potential_name)
+                        matches = combine_matching_techniques(potential_name)
                         if matches:
                             all_matches.update(matches)
                         
@@ -130,17 +132,18 @@ def extract_text_from_image(image):
                 
                 if not found_pattern:
                     # If no pattern matched, try matching the whole text
-                    matches = find_matching_names(text)
+                    matches = combine_matching_techniques(text)
                     if matches:
                         all_matches.update(matches)
         
-        return ' '.join(all_matches)
+        # Ensure names are unique and not duplicated
+        return ' '.join(sorted(all_matches))
     except Exception as e:
         print(f"Error in OCR processing: {str(e)}")
         return ''
 
 @lru_cache(maxsize=1000)
-def find_matching_names(text, threshold=0.65):
+def find_matching_names(text, threshold=0.75):
     if not text:
         return []
     
@@ -189,20 +192,32 @@ def find_matching_names(text, threshold=0.65):
             
     except Exception as e:
         print(f"Error in cosine similarity: {str(e)}")
-        # Fallback to partial matching with stricter requirements
-        for processed_name, original_name in NAMES_DICT.items():
-            if len(processed_name) > 3 and (
-                processed_name in text or 
-                text in processed_name or
-                # Handle special cases
-                (processed_name == 'azazelbreath' and 'azaze' in text) or
-                (processed_name == 'escilator' and 'esci' in text)
-            ):
-                # Require 70% length match for partial matches
-                if len(processed_name) >= len(text) * 0.7:
-                    return [original_name]
     
     return []
+
+def combine_matching_techniques(text, threshold=0.75):
+    """
+    Combine exact and fuzzy (cosine) matching for robust name detection.
+    Returns a set of matched names. No substrings allowed.
+    """
+    matches = set()
+    processed_text = preprocess_name(text)
+    # Exact match
+    if processed_text in NAMES_DICT:
+        matches.add(NAMES_DICT[processed_text])
+    # Fuzzy (cosine similarity)
+    vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(2, 3))
+    all_keys = list(NAMES_DICT.keys())
+    all_texts = [processed_text] + all_keys
+    try:
+        tfidf_matrix = vectorizer.fit_transform(all_texts)
+        similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])
+        for idx, similarity in enumerate(similarities[0]):
+            if similarity >= threshold:
+                matches.add(NAMES_DICT[all_keys[idx]])
+    except Exception as e:
+        pass
+    return matches
 
 @app.route('/')
 def index():
@@ -251,23 +266,20 @@ def upload_file():
                         cap = cv2.VideoCapture(temp_path)
                         all_matches = set()
                         
-                        # Process every 20th frame to avoid processing too many frames
+                        # Process every 5th frame to avoid processing too many frames
                         frame_count = 0
                         while cap.isOpened():
                             ret, frame = cap.read()
                             if not ret:
                                 break
-                            
-                            if frame_count % 20 == 0:
+                            if frame_count % 60 == 0:
                                 # Convert frame to PIL Image
                                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                                 frame_pil = Image.fromarray(frame_rgb)
                                 matches = extract_text_from_image(frame_pil)
                                 if matches:
                                     all_matches.update(matches.split())
-                            
                             frame_count += 1
-                        
                         cap.release()
                     finally:
                         # Clean up is handled automatically by the context manager
@@ -287,4 +299,4 @@ def upload_file():
     return jsonify({'error': 'Invalid file type'}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

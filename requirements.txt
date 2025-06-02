@@ -1,8 +1,8 @@
-flask==2.3.3
-numpy
-Pillow==10.0.0
+flask
+werkzeug
+pillow
 pytesseract
 scikit-learn
+numpy
 opencv-python-headless
-werkzeug==2.3.7
-gunicorn==20.1.0
+rapidfuzz
