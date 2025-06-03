@@ -409,7 +409,7 @@
                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                 <p class="upload-text">Drag and drop your file here</p>
                 <p class="upload-text" style="font-size: 0.9rem;">or</p>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*">
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*" multiple>
                 <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                     <i class="fas fa-upload"></i>
                     Choose File
@@ -490,33 +490,34 @@
 
         function handleDrop(e) {
             const dt = e.dataTransfer;
-            const files = dt.files;
+            const files = Array.from(dt.files);
             handleFiles({ target: { files: files } });
         }
 
         function handleFiles(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
 
-            // Validate file type
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/avi', 'video/quicktime'];
-            if (!allowedTypes.includes(file.type)) {
-                showError('Invalid file type. Please upload an image (PNG, JPG) or video (MP4, AVI, MOV)');
-                return;
+            // Validate all files
+            for (const file of files) {
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/avi', 'video/quicktime'];
+                if (!allowedTypes.includes(file.type)) {
+                    showError('Invalid file type. Please upload an image (PNG, JPG) or video (MP4, AVI, MOV)');
+                    return;
+                }
+                if (file.size > 16 * 1024 * 1024) {
+                    showError('File size too large. Maximum size is 16MB');
+                    return;
+                }
             }
-
-            // Validate file size (16MB max)
-            if (file.size > 16 * 1024 * 1024) {
-                showError('File size too large. Maximum size is 16MB');
-                return;
-            }
-
-            uploadFile(file);
+            uploadFiles(files);
         }
 
-        function uploadFile(file) {
+        function uploadFiles(files) {
             const formData = new FormData();
-            formData.append('file', file);
+            for (const file of files) {
+                formData.append('file', file);
+            }
 
             // Show loading state
             loading.classList.add('active');
@@ -533,15 +534,11 @@
             .then(response => response.json())
             .then(data => {
                 loading.classList.remove('active');
-                
                 if (data.error) {
                     showError(data.error);
                     return;
                 }
-
-                // Show results
                 results.classList.add('active');
-                
                 if (data.matches) {
                     currentMatches = data.matches.split(' ').filter(match => match.trim());
                     matches.innerHTML = currentMatches.map(match => `

@@ -2,7 +2,3 @@ flask
 werkzeug
 pillow
 pytesseract
-scikit-learn
-numpy
-opencv-python-headless
-rapidfuzz
